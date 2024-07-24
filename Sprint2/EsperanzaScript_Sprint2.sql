@@ -1,24 +1,31 @@
 USE transactions;
+SELECT * FROM company;
+SELECT * FROM transaction;
 --------------------------------------------------------------------------------
 -- NIVEL 1
 --------------------------------------------------------------------------------
 -- 2: Consultas con JOIN 
 
 	-- 2.1: Listado de los países que están haciendo compras:
+			
 		SELECT DISTINCT c.country AS ListadoPaisesComprando
 		FROM company c
-		INNER JOIN transaction t ON c.id = t.company_id;
+		INNER JOIN transaction t ON c.id = t.company_id
+        WHERE t.declined = 0;
 
 	-- 2.2 Desde cuántos países se realizan las compras:
-		SELECT count(DISTINCT c.country) AS NumeroDePaisesComprando
+		
+        SELECT count(DISTINCT c.country) AS NumeroDePaisesComprando
 		FROM company c
-		INNER JOIN transaction t ON c.id = t.company_id;
+		INNER JOIN transaction t ON c.id = t.company_id
+        WHERE t.declined = 0;
 
 	-- 2.3 Identificar la compañía con la media más grande de ventas: 
     
 		SELECT c.company_name AS Empresa, AVG(t.amount) AS VentasMedias
 		FROM company c
 		JOIN transaction t ON c.id = t.company_id
+        WHERE t.declined = 0
 		GROUP BY c.company_name
 		ORDER BY VentasMedias DESC
 		LIMIT 1;
@@ -50,27 +57,22 @@ USE transactions;
 							);
 						
 		-- 3.3 Eliminaran del sistema les empreses que no tenen transaccions registrades, entrega el llistat d'aquestes empreses.
-		-- Antes de eliminar, tendremos que detectar los que cumplen las condición del enunciado para poder listarlos con el select:
-            
-			SELECT * 		
-			FROM company c
+		            
+			SELECT *	
+			FROM company c           
 			WHERE c.id NOT IN (
 							SELECT DISTINCT t.company_id
 							FROM transaction t
-							);
+							); -- todas las empresas tienen transacciones registradas. No hay empresas a eliminar
 							
-			-- Ahora podemos "delete" los registros:
+			-- Ahora podríamos "delete" los registros:
 			DELETE FROM company
 			WHERE id NOT IN (
 							SELECT t.company_id
 							FROM transaction t
 							);
 
-		DELETE FROM company
-		WHERE id NOT IN (
-						SELECT t.company_id
-						FROM transaction t);
-
+		
 ---------------------------------------------------------------------------------------
 -- NIVEL 2
 ---------------------------------------------------------------------------------------
@@ -83,7 +85,8 @@ USE transactions;
 			SUM(t.amount) AS VentasDelDia
 		FROM transaction t
 		INNER JOIN company c ON t.company_id = c.id
-		GROUP BY t.timestamp, t.company_id, c.company_name
+        WHERE t.declined = 0 
+		GROUP BY DATE(t.timestamp), t.company_id, c.company_name
 		ORDER BY VentasDelDia DESC
 		LIMIT 5;
 
@@ -99,7 +102,8 @@ USE transactions;
 					GROUP BY company_id
 					) x
 					ON c.id = x.company_id
-		GROUP BY t.timestamp, t.company_id, c.company_name, x.AcumVentasEmpresa
+        WHERE t.declined = 0            
+		GROUP BY DATE(t.timestamp), t.company_id, c.company_name, x.AcumVentasEmpresa
 		ORDER BY VentasDelDia DESC
 		LIMIT 5;
 
@@ -108,6 +112,7 @@ USE transactions;
 	SELECT c.country, AVG(t.amount) MediaVentasPais
 	FROM transaction t
 	INNER JOIN company c ON t.company_id = c.id
+    WHERE t.declined = 0
 	GROUP BY c.country
 	ORDER BY MediaVentasPais DESC;
 
@@ -117,28 +122,27 @@ USE transactions;
 -- realitzades per empreses que estan situades en el mateix país que aquesta companyia.
 	-- 3.3.1. Mostra el llistat aplicant JOIN i subconsultes.
     
-		SELECT t.* , c.country AS País
+		SELECT t.*, c.country AS País, c.company_name AS Empresa
 		FROM transaction t
-		INNER JOIN company c ON t.company_id = c.id
+		JOIN company c ON t.company_id = c.id
 		WHERE c.country = (
 							SELECT c1.country
 							FROM company c1
 							WHERE c1.company_name = 'Non Institute'
-						  );
+						  )
+		AND NOT c.company_name = 'Non Institute';
 	
     -- 3.3.2. Mostra el llistat aplicant solament subconsultes.
     
-		SELECT * -- , c.country AS País Como no utilizo joins, no puedo traer el país de referencia o no sé cómo hacerlo
-		FROM transaction t
-		WHERE t.company_id IN  (
-								SELECT c.id
-								FROM company c
-								WHERE c.country = (
-													SELECT c1.country
-													FROM company c1
-													WHERE c1.company_name = 'Non Institute'
-													)
-								);
+		SELECT t.*, c.country AS País, c.company_name AS Empresa
+		FROM transaction t, company c
+		WHERE t.company_id = c.id
+		AND c.country = (
+						SELECT c2.country
+						FROM company c2
+						WHERE c2.company_name = 'Non Institute'
+						)
+		AND NOT c.company_name = 'Non Institute';
                             
 -------------------------------------------------------------------------------------------------------------
 -- Nivell 3
@@ -163,7 +167,7 @@ USE transactions;
 	SELECT c.id, c.company_name AS Empresa, CASE
 											WHEN COUNT(t.id) > 4 THEN 'Mas de 4 ventas'
 											ELSE 'Pocas ventas'
-											END AS NivelVentas-- , COUNT(t.id) AS NumTransacciones
+											END AS NivelVentas -- , COUNT(t.id) AS NumTransacciones
 	FROM company c
 	INNER JOIN transaction t ON t.company_id = c.id
 	GROUP BY c.id, c.company_name
