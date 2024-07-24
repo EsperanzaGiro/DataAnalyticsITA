@@ -78,32 +78,11 @@ SELECT * FROM transaction;
 ---------------------------------------------------------------------------------------
 -- 3.1 Identifica els cinc dies que es va generar la quantitat més gran d'ingressos a l'empresa per vendes. 
 -- Mostra la data de cada transacció juntament amb el total de les vendes.
-
-	-- OPCIÓN A: sin mostrar el acum. de ventas total por empresa. Sólo el del día:
-    
-		SELECT t.timestamp AS DiaMayorVenta , t.company_id AS IDEmpresa, c.company_name AS Empresa, 
-			SUM(t.amount) AS VentasDelDia
+	    
+		SELECT date(t.timestamp) AS DiaMayorVenta, SUM(t.amount) AS VentasDelDia
 		FROM transaction t
-		INNER JOIN company c ON t.company_id = c.id
-        WHERE t.declined = 0 
-		GROUP BY DATE(t.timestamp), t.company_id, c.company_name
-		ORDER BY VentasDelDia DESC
-		LIMIT 5;
-
-	-- OPCIÓN B: si queremos mostrar también el acumulado total de ventas de la empresa en cada linea:
-    
-		SELECT t.timestamp AS DiaMayorVenta , t.company_id AS IDEmpresa, c.company_name AS Empresa, 
-			SUM(t.amount) AS VentasDelDia, x.AcumVentasEmpresa
-		FROM transaction t
-		INNER JOIN company c ON t.company_id = c.id
-		INNER JOIN (
-					SELECT t1.company_id, SUM(t1.amount) AS AcumVentasEmpresa 
-					FROM transaction t1
-					GROUP BY company_id
-					) x
-					ON c.id = x.company_id
-        WHERE t.declined = 0            
-		GROUP BY DATE(t.timestamp), t.company_id, c.company_name, x.AcumVentasEmpresa
+		WHERE t.declined = 0 
+		GROUP BY DATE(t.timestamp)
 		ORDER BY VentasDelDia DESC
 		LIMIT 5;
 
