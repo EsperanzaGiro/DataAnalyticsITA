@@ -108,8 +108,8 @@ SELECT * FROM transaction;
 							SELECT c1.country
 							FROM company c1
 							WHERE c1.company_name = 'Non Institute'
-						  )
-		AND NOT c.company_name = 'Non Institute';
+						  ); 
+		-- AND NOT c.company_name = 'Non Institute'; (Excluiríamos los datos registros de 'Non Institute')
 	
     -- 3.3.2. Mostra el llistat aplicant solament subconsultes.
     
@@ -120,8 +120,8 @@ SELECT * FROM transaction;
 						SELECT c2.country
 						FROM company c2
 						WHERE c2.company_name = 'Non Institute'
-						)
-		AND NOT c.company_name = 'Non Institute';
+						);
+		-- AND NOT c.company_name = 'Non Institute'; (Excluiríamos los datos registros de 'Non Institute')
                             
 -------------------------------------------------------------------------------------------------------------
 -- Nivell 3
